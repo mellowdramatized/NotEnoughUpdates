@@ -378,68 +378,71 @@ public class TrophyFishPage extends GuiProfileViewerPage {
 		return NotEnoughUpdates.INSTANCE.manager.jsonToStack(jsonItem);
 	}
 
-	private void loadTrophyInformation(JsonObject trophyObject) {
-		Map<String, List<Pair<TrophyFish.TrophyFishRarity, Integer>>> trophyFishRarityIntegerMap = new HashMap<>();
-		totalCount = 0;
-		for (Map.Entry<String, JsonElement> stringJsonElementEntry : trophyObject.entrySet()) {
-			String key = stringJsonElementEntry.getKey();
-			if (key.equalsIgnoreCase("rewards") || key.equalsIgnoreCase("total_caught") ||
-				key.equalsIgnoreCase("last_caught")) {
-				if (key.equalsIgnoreCase("total_caught")) {
-					totalCount = stringJsonElementEntry.getValue().getAsInt();
-				}
-				continue;
-			}
+private void loadTrophyInformation(JsonObject trophyObject) {
+    Map<String, List<Pair<TrophyFish.TrophyFishRarity, Integer>>> trophyFishRarityIntegerMap = new HashMap<>();
+    totalCount = 0;
+    for (Map.Entry<String, JsonElement> stringJsonElementEntry : trophyObject.entrySet()) {
+        String key = stringJsonElementEntry.getKey();
+        if (key.equalsIgnoreCase("rewards") || key.equalsIgnoreCase("total_caught") ||
+            key.equalsIgnoreCase("last_caught")) {
+            if (key.equalsIgnoreCase("total_caught")) {
+                totalCount = stringJsonElementEntry.getValue().getAsInt();
+            }
+            continue;
+        }
 
-			String[] s = key.split("_");
-			String type = s[s.length - 1];
-			TrophyFish.TrophyFishRarity trophyFishRarity;
-			int value = 0;
-			try {
-				value = stringJsonElementEntry.getValue().getAsInt();
-			} catch (NumberFormatException e) {
-				value = -1;
-			}
+        String[] s = key.split("_");
+        String type = s[s.length - 1];
+        TrophyFish.TrophyFishRarity trophyFishRarity;
+        int value = -1; // Default value set to -1 to handle NumberFormatException
+        try {
+            value = stringJsonElementEntry.getValue().getAsInt();
+        } catch (NumberFormatException e) {
+            // Handle the case where the value cannot be parsed as an integer
+            e.printStackTrace(); // You might want to log this exception for debugging purposes
+        }
 
-			if (key.startsWith("golden_fish_")) {
-				type = s[2];
-			}
-			try {
-				trophyFishRarity = TrophyFish.TrophyFishRarity.valueOf(type.toUpperCase(Locale.US));
-			} catch (IllegalArgumentException ignored) {
-				total.put(WordUtils.capitalize(key), value);
-				continue;
-			}
+        if (key.startsWith("golden_fish_")) {
+            type = s[2];
+        }
+        try {
+            trophyFishRarity = TrophyFish.TrophyFishRarity.valueOf(type.toUpperCase(Locale.US));
+        } catch (IllegalArgumentException ignored) {
+            total.put(WordUtils.capitalize(key), value);
+            continue;
+        }
 
-			String replace = key.replace("_" + type, "");
-			String name = WordUtils.capitalize(replace);
-			List<Pair<TrophyFish.TrophyFishRarity, Integer>> pairs;
+        String replace = key.replace("_" + type, "");
+        String name = WordUtils.capitalize(replace);
+        List<Pair<TrophyFish.TrophyFishRarity, Integer>> pairs;
 
-			if (trophyFishRarityIntegerMap.containsKey(name)) {
-				pairs = trophyFishRarityIntegerMap.get(name);
-			} else {
-				pairs = new ArrayList<>();
-			}
-			pairs.add(Pair.of(trophyFishRarity, value));
-			trophyFishRarityIntegerMap.put(name, pairs);
-		}
+        if (trophyFishRarityIntegerMap.containsKey(name)) {
+            pairs = trophyFishRarityIntegerMap.get(name);
+        } else {
+            pairs = new ArrayList<>();
+        }
+        pairs.add(Pair.of(trophyFishRarity, value));
+        trophyFishRarityIntegerMap.put(name, pairs);
+    }
 
-		trophyFishRarityIntegerMap.forEach((name, pair) -> {
-			if (!trophyFishList.containsKey(name)) {
-				TrophyFish trophyFish = new TrophyFish(name, new HashMap<>());
-				trophyFish.addTotal(total.get(name));
-				for (Pair<TrophyFish.TrophyFishRarity, Integer> pair1 : pair) {
-					trophyFish.add(pair1.getKey(), pair1.getValue());
-				}
-				trophyFishList.put(name, trophyFish);
-			} else {
-				TrophyFish trophyFish = trophyFishList.get(name);
-				for (Pair<TrophyFish.TrophyFishRarity, Integer> pair1 : pair) {
-					trophyFish.add(pair1.getKey(), pair1.getValue());
-				}
-			}
-		});
-	}
+    trophyFishRarityIntegerMap.forEach((name, pair) -> {
+        if (!trophyFishList.containsKey(name)) {
+            TrophyFish trophyFish = new TrophyFish(name, new HashMap<>());
+            trophyFish.addTotal(total.get(name));
+            for (Pair<TrophyFish.TrophyFishRarity, Integer> pair1 : pair) {
+                trophyFish.add(pair1.getKey(), pair1.getValue());
+            }
+            trophyFishList.put(name, trophyFish);
+        } else {
+            TrophyFish trophyFish = trophyFishList.get(name);
+            for (Pair<TrophyFish.TrophyFishRarity, Integer> pair1 : pair) {
+                trophyFish.add(pair1.getKey(), pair1.getValue());
+            }
+        }
+    });
+}
+
+	
 
 	private List<String> fixStringName(List<String> list) {
 		List<String> fixedList = new ArrayList<>();
